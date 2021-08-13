@@ -14,7 +14,6 @@ class CNN(nn.Module):
         )
 
     def forward(self, x):
-        print(f">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> {x.shape}")
         x = x[:, :1]  # log_mels only
         x = x.permute(0, 1, 3, 2)  # (time, n_mels)
         # pass through first conv layer
