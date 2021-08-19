@@ -83,7 +83,7 @@ def write_audio(data):
         audio_data = librosa.resample(audio_data, session["fps"], sample_rate)
         print(audio_data.size)
         # for testing write to file
-        sf.write(f'{current_app.config["FILEDIR"]}temp.wav', audio_data, sample_rate)
+        # sf.write(f'{current_app.config["FILEDIR"]}temp.wav', audio_data, sample_rate)
         audio_data_length = audio_data.size / sample_rate * 1000
         # if given audio is less than window size, pad it
         if audio_data_length < window_size_ms:
