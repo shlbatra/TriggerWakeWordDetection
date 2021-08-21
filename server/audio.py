@@ -17,7 +17,8 @@ from utils.transformers import audio_transform, ZmuvTransform
 app = Flask(__name__)
 app.config["FILEDIR"] = "static/_files/"
 
-socketio = SocketIO(app, logger=True, engineio_logger=True)
+# socketio = SocketIO(app, logger=True, engineio_logger=True)
+socketio = SocketIO(app)
 
 wake_words = ["hey", "fourth", "brain"]
 classes = wake_words[:]
@@ -73,12 +74,19 @@ def write_audio(data):
     """Write a chunk of audio from the client."""
     session["frames"].append(data)
     session["windowSize"] += 1
-    print(f'{session["windowSize"]} - {int(session["fps"] / session["bufferSize"] * window_size_ms / 1000)}')
+    # print(f'{session["windowSize"]} - {int(session["fps"] / session["bufferSize"] * window_size_ms / 1000)}')
     # if we got 750 ms then process
     if session["windowSize"] >= int(session["fps"] / session["bufferSize"] * window_size_ms / 1000):
         # convert stream to numpy
         stream_bytes = [str.encode(i) if type(i) == str else i for i in session["frames"]]
-        audio_data = np.frombuffer(b"".join(stream_bytes), dtype=np.int16).astype(np.float) / audio_float_size
+        try:
+            audio_data = np.frombuffer(b"".join(stream_bytes), dtype=np.int16).astype(np.float) / audio_float_size
+        except Exception as e:
+            print(f"not able to read from buffer {e}")
+            # reset
+            session["windowSize"] = 0
+            session["frames"] = []
+            return
         # convert sample rate to 16K
         audio_data = librosa.resample(audio_data, session["fps"], sample_rate)
         print(audio_data.size)
@@ -102,7 +110,7 @@ def write_audio(data):
         session["batch"] = []  # reset batch
         mel_audio_data = audio_transform(audio_tensors, device, sample_rate)
         mel_audio_data = zmuv_transform(mel_audio_data)
-        scores = model(mel_audio_data.unsqueeze(0))
+        scores = model(mel_audio_data.unsqueeze(1))
         scores = F.softmax(scores, -1).squeeze(1)
         for score in scores:
             preds = score.cpu().detach().numpy()

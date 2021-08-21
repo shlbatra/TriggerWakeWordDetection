@@ -28,6 +28,7 @@ function toggleRecording( e ) {
         socketio.emit('end-recording');
     } else {
         // start recording
+        document.getElementById('wavefiles').innerHTML = ""
         e.classList.add('recording');
         recording = true;
         socketio.emit('start-recording', {numChannels: channels, bufferSize: bufferSize, bps: 16, fps: parseInt(audioContext.sampleRate)});

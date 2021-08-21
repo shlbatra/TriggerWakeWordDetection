@@ -1,3 +1,6 @@
+// Follow audio utils are referred from megenta-js 
+// https://github.com/magenta/magenta-js/blob/master/music/src/core/audio_utils.ts
+
 const SAMPLE_RATE = 16000
 const isSafari = window.webkitOfflineAudioContext;
 const offlineCtx = new OfflineAudioContext(1, SAMPLE_RATE, SAMPLE_RATE);
