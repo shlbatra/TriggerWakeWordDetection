@@ -103,6 +103,9 @@ def write_audio(data):
             audio_data = audio_data[:max_length]
         # convert to tensor
         inp = torch.from_numpy(audio_data).float().to(device)
+        # recording is stopped return
+        if "batch" not in session:
+            return
         session["batch"].append(inp)
         # reset
         session["windowSize"] = 0

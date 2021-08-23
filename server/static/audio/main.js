@@ -14,6 +14,13 @@ const bufferSize = 1024
 const channels = 1
 
 addprediction = word => {
+    if (word.endsWith('detected')) {
+        // play prompt
+        let prompt = new Audio("static/audio/prompt.mp3")
+        prompt.play()
+        // stop recording
+        document.getElementById("record").click();
+    } 
     words = document.createElement('p');
     words.innerHTML = '<b>' + word + '</b>';
     document.getElementById('wavefiles').appendChild(words);

@@ -204,6 +204,10 @@ function gotStream(stream) {
                         targetState += 1
                         if (wakeWords.join(' ') == predictWords.join(' ')) {
                             addprediction(`Wake word detected - ${predictWords.join(' ')}`)
+                            let prompt = new Audio("static/audio/prompt.mp3");
+                            prompt.play()
+                            // stop recording
+                            document.getElementById("record").click();
                             predictWords = []
                             targetState = 0
                         }
