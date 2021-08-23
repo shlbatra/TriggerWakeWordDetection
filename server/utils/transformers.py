@@ -19,7 +19,9 @@ def audio_transform(audio_data, device, sample_rate):
     #    frequencies. (not by distance on freq domain but distance as it is heard by human ear)
     # 3. Generate Spectrogram - For each window, decompose the magnitude of the signal
     #    into its components, corresponding to the frequencies in the mel scale.
-    mel_spectrogram = MelSpectrogram(n_mels=num_mels, sample_rate=sample_rate, n_fft=num_fft, hop_length=hop_length)
+    mel_spectrogram = MelSpectrogram(
+        n_mels=num_mels, sample_rate=sample_rate, n_fft=num_fft, hop_length=hop_length, norm="slaney"
+    )
     mel_spectrogram.to(device)
     log_mels = mel_spectrogram(audio_data.float()).add_(1e-7).log_().contiguous()
     # returns (channel, n_mels, time)

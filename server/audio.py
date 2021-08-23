@@ -1,12 +1,13 @@
 """Audio Recording Socket.IO Example
 Implements server-side audio recording.
 """
-from flask import Flask, current_app, session, render_template
+from flask import Flask, session, render_template
 from flask_socketio import emit, SocketIO
 
 import numpy as np
 import librosa
-import soundfile as sf
+
+# import soundfile as sf
 
 import torch
 import torch.nn.functional as F
@@ -43,7 +44,9 @@ model.to(device)
 print(model)
 
 # load trained model
-model.load_state_dict(torch.load("trained_models/model_hey_fourth_brain.pt", map_location=torch.device("cpu")))
+model.load_state_dict(
+    torch.load("trained_models/model_hey_fourth_brain_with_noise.pt", map_location=torch.device("cpu"))
+)
 
 # load zmuv
 zmuv_transform = ZmuvTransform().to(device)

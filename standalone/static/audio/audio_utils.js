@@ -317,12 +317,12 @@ function createMelFilterbank(params) {
     }
 
     // Slaney-style mel is scaled to be approx constant energy per channel.
-    //for (let i = 0; i < weights.length; i++) {
-    //    // How much energy per channel.
-    //    const enorm = 2.0 / (melFreqs[2 + i] - melFreqs[i]);
-    //    // Normalize by that amount.
-    //    weights[i] = weights[i].map((val) => val * enorm);
-    //}
+    for (let i = 0; i < weights.length; i++) {
+        // How much energy per channel.
+        const enorm = 2.0 / (melFreqs[2 + i] - melFreqs[i]);
+        // Normalize by that amount.
+        weights[i] = weights[i].map((val) => val * enorm);
+    }
 
     return weights;
 }

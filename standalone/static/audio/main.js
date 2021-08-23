@@ -27,7 +27,6 @@ const numOfBatches = 3
 let predictWords = []
 let arrayBuffer = []
 let targetState = 0
-let pauseStreaming = false
 
 const windowBufferSize = windowSize/1000 * sampleRate
 
@@ -51,6 +50,8 @@ function toggleRecording( e ) {
         recording = false;
     } else {
         // start recording
+        document.getElementById('wavefiles').innerHTML = ""
+        addprediction('Listening for wake words ...')
         e.classList.add('recording');
         recording = true;
     }
@@ -112,9 +113,9 @@ function updateAnalysers(time) {
 
 function flatten(log_mels) {
     flatten_arry = []
-    for(let i = 0; i < log_mels.length; i++) {
-        for(let j = 0; j < log_mels[i].length; j++) {
-            flatten_arry.push((Math.log(log_mels[i][j] + bias) - zmuv_mean) / zmuv_std)
+    for(i = 0; i < MEL_SPEC_BINS; i++) {
+        for(j = 0; j < log_mels.length; j++) {
+            flatten_arry.push((Math.log(log_mels[j][i] + bias) - zmuv_mean) / zmuv_std)
         }
     }
     return flatten_arry
@@ -151,22 +152,21 @@ function gotStream(stream) {
     // bufferSize, in_channels, out_channels
     scriptNode = (audioContext.createScriptProcessor || audioContext.createJavaScriptNode).call(audioContext, bufferSize, channels, channels);
     scriptNode.onaudioprocess = async function (audioEvent) {
-        if (recording && !pauseStreaming) {
+        if (recording) {
             let resampledMonoAudio = await resampleAndMakeMono(audioEvent.inputBuffer);
             arrayBuffer = [...arrayBuffer, ...resampledMonoAudio]
-            batchSize = Math.ceil(arrayBuffer.length/windowBufferSize)
+            batchSize = Math.floor(arrayBuffer.length/windowBufferSize)
             // if we got batches * 750 ms seconds of buffer 
             if (arrayBuffer.length >= numOfBatches * windowBufferSize) {
-                pauseStreaming = true
-                console.log('streaming is paused')
                 let batch = 0
-                let dataProcessed;
+                let dataProcessed, log_mels;
                 for (let i = 0; i < arrayBuffer.length; i = i + windowBufferSize) {
                     batchBuffer = arrayBuffer.slice(i, i+windowBufferSize)
                     //  if it is less than 750 ms then pad it with ones
                     if (batchBuffer.length < windowBufferSize) {
-                        batchBuffer = padArray(batchBuffer, windowBufferSize, 1)
-                        //break
+                        //batchBuffer = padArray(batchBuffer, windowBufferSize, 1)
+                        // discard last slice
+                        break
                     }
                     // arrayBuffer = arrayBuffer.filter(x => x/audioFloatSize)
                     // calculate log mels
@@ -176,22 +176,15 @@ function gotStream(stream) {
                         nMels: MEL_SPEC_BINS,
                         nFft: NUM_FFTS
                     });
-                    // we will get 61 arrays of each 40 length
-                    // convert to nd array of 61x40
-                    let nd_mels = ndarray(flatten(log_mels), [log_mels.length, MEL_SPEC_BINS])
                     if (batch == 0) {
-                        // create empty [5,1,40,61] - This is model takes input
-                        dataProcessed = ndarray(new Float32Array(batchSize * MEL_SPEC_BINS * log_mels.length * channels), 
-                                    [batchSize, channels, MEL_SPEC_BINS, log_mels.length])
-
+                        dataProcessed = []
                     }
-                    // convert [61, 40] to [batch, 1, 40, 61]
-                    ndarray.ops.assign(dataProcessed.pick(batch, 0, null, null), nd_mels.transpose(1,0).pick(null,  null));
+                    dataProcessed = [...dataProcessed, ...flatten(log_mels)]
                     batch = batch + 1
                 }
                 // clear buffer
                 arrayBuffer = []
-                let inputTensor = new onnx.Tensor(dataProcessed.data, 'float32', dataProcessed.shape);
+                let inputTensor = new onnx.Tensor(dataProcessed, 'float32', [batch, 1, MEL_SPEC_BINS, dataProcessed.length/(batch * MEL_SPEC_BINS)]);
                 // Run model with Tensor inputs and get the result.
                 let outputMap = await session.run([inputTensor]);
                 let outputData = outputMap.values().next().value.data;
@@ -216,8 +209,6 @@ function gotStream(stream) {
                         }
                     }
                 }
-                pauseStreaming = false
-                console.log('streaming is resumed')
             }
         }
     }

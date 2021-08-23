@@ -13,12 +13,13 @@ var socketio = io.connect(location.origin + '/audio');
 const bufferSize = 1024
 const channels = 1
 
-
-socketio.on('add-prediction', function(word) {
+addprediction = word => {
     words = document.createElement('p');
     words.innerHTML = '<b>' + word + '</b>';
     document.getElementById('wavefiles').appendChild(words);
-});
+}
+
+socketio.on('add-prediction', word => addprediction(word));
 
 function toggleRecording( e ) {
     if (e.classList.contains('recording')) {
@@ -29,6 +30,7 @@ function toggleRecording( e ) {
     } else {
         // start recording
         document.getElementById('wavefiles').innerHTML = ""
+        addprediction('Listening for wake words ...')
         e.classList.add('recording');
         recording = true;
         socketio.emit('start-recording', {numChannels: channels, bufferSize: bufferSize, bps: 16, fps: parseInt(audioContext.sampleRate)});

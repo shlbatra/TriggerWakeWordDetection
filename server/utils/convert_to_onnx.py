@@ -1,6 +1,6 @@
 import torch
 
-from model import CNN2
+from model import CNN
 
 
 def main():
@@ -15,8 +15,10 @@ def main():
     # get available device
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # load model
-    pytorch_model = CNN2(num_labels, num_maps1, num_maps2, num_hidden_input, hidden_size)
-    pytorch_model.load_state_dict(torch.load("trained_models/model_hey_fourth_brain.pt", map_location=device))
+    pytorch_model = CNN(num_labels, num_maps1, num_maps2, num_hidden_input, hidden_size)
+    pytorch_model.load_state_dict(
+        torch.load("trained_models/model_hey_fourth_brain_with_noise.pt", map_location=device)
+    )
     # put in eval mode
     pytorch_model.eval()
     # define the input size
