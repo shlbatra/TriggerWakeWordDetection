@@ -15,11 +15,11 @@ import torch.nn.functional as F
 from utils.model import CNN
 from utils.transformers import audio_transform, ZmuvTransform
 
-app = Flask(__name__)
+application = app = Flask(__name__)
 app.config["FILEDIR"] = "static/_files/"
 
 # socketio = SocketIO(app, logger=True, engineio_logger=True)
-socketio = SocketIO(app)
+socketio = SocketIO(app, cors_allowed_origins='*')
 
 wake_words = ["hey", "fourth", "brain"]
 classes = wake_words[:]
@@ -144,4 +144,5 @@ def end_recording():
 
 
 if __name__ == "__main__":
+    app.run(host='0.0.0.0')
     socketio.run(app)
