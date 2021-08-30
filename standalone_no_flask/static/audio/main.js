@@ -16,7 +16,7 @@ const channels = 1
 const windowSize = 750
 const zmuv_mean = 0.000016
 const zmuv_std = 0.072771
-const bias = 1e-7
+const log_offset = 1e-7
 const SPEC_HOP_LENGTH = 200;
 const MEL_SPEC_BINS = 40;
 const NUM_FFTS = 512;
@@ -28,6 +28,8 @@ let predictWords = []
 let arrayBuffer = []
 let targetState = 0
 
+let bufferMap = {}
+
 const windowBufferSize = windowSize/1000 * sampleRate
 
 let session;
@@ -38,9 +40,150 @@ async function loadModel() {
 loadModel()
 
 const addprediction = function(word) {
-    words = document.createElement('p');
-    words.innerHTML = '<b>' + word + '</b>';
-    document.getElementById('wavefiles').appendChild(words);
+    if(wakeWords.filter(i => i == word).length) {
+        addWordSummary(word)
+    } else {
+        words = document.createElement('p');
+        words.innerHTML = '<b>' + word + '</b>';
+        document.getElementById('wavefiles').appendChild(words);
+    }
+}
+
+function playBuffer(buffer) {
+    var audioBuffer = audioContext.createBuffer(1, buffer.length, SAMPLE_RATE);
+    var audioBufferData = audioBuffer.getChannelData(0);
+    audioBufferData.set(buffer);
+    var source = audioContext.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(audioContext.destination);
+    source.start();
+}
+
+function createLayout(title, xTitle, yTitle, params={}) {
+    const logY = (params.logY == true);
+    const logX = (params.logX == true);
+    return {
+      title: title,
+      xaxis: {
+        title: xTitle,
+        type: logX ? 'log' : null,
+      },
+      yaxis: {
+        title: yTitle,
+        type: logY ? 'log' : null,
+      }
+    }
+  }
+ 
+  
+function plotAudio(y, layout) {
+    //let t = y.map((value, index) => (index / sr));
+    let t = y.map((value, index) => index);
+    return plotXY(t, y, layout);
+}
+
+function plotXY(x, y, layout) {
+    const out = document.createElement('div');
+    out.className = 'plot';
+    const xArr = Array.prototype.slice.call(x);
+    const yArr = Array.prototype.slice.call(y);
+    const data = [{
+      x: xArr,
+      y: yArr,
+    }]
+    Plotly.newPlot(out, data, layout);
+    return out;
+}
+
+function plotSpectrogram(spec, samplesPerSlice, layout) {
+    return plotImage(spec, samplesPerSlice, layout);
+}
+
+function plotImage(stft, samplesPerSlice, layout) {
+    let out = document.createElement('div');
+    out.className = 'plot';
+    // Transpose the spectrogram we pass in.
+    let zArr = [];
+    for (let i = 0; i < stft.length; i++) {
+      for (let j = 0; j < stft[0].length; j++) {
+        if (zArr[j] == undefined) {
+          zArr[j] = [];
+        }
+        // librosa.power_to_db(spec)
+        zArr[j][i] = 10 * Math.log10(stft[i][j]) - 10 * Math.log10(1)
+      }
+    }
+    // Calculate the X values (times) from the stft params.
+    //const xArr = stft.map((value, index) => index * samplesPerSlice / sr);
+    const xArr = stft.map((value, index) => index);
+    // Calculate Y values (frequencies) from stft.
+    const fft = Array.prototype.slice.call(stft[0]);
+    const yArr = fft.map((value, index) => index);
+  
+    const data = [
+      {
+        x: xArr,
+        y: yArr,
+        z: zArr,
+        type: 'heatmap'
+      }
+    ];
+    Plotly.newPlot(out, data, layout);
+    return out;
+  }
+
+
+
+const addWordSummary = function(word) {
+    // create play button
+    playbtn = document.createElement('button');
+    playbtn.innerHTML = word
+    playbtn.onclick = function() {
+        playBuffer(bufferMap[`${this.innerText}_buffer`])
+    }
+
+    let arrayBuffer = bufferMap[`${word}_buffer`]
+    let log_mels = bufferMap[`${word}_mels`]
+
+    timePlot = plotAudio(arrayBuffer, createLayout('Time domain', 'Time (samples)', 'Amplitude'));
+    melPlot = plotSpectrogram(log_mels, SPEC_HOP_LENGTH, createLayout('Mel Spectrogram', 'frame', 'mel freq'));
+
+    // compute log_mels
+    let log_mels_offset = [];
+    for (let i = 0; i < log_mels.length; i++) {
+        for (let j = 0; j < log_mels[0].length; j++) {
+        if (log_mels_offset[i] == undefined) {
+            log_mels_offset[i] = [];
+        }
+        log_mels_offset[i][j] = Math.log(log_mels[i][j] + log_offset)
+        }
+    }
+
+    logMelPlot = plotSpectrogram(log_mels_offset, SPEC_HOP_LENGTH, createLayout('Mel Spectrogram', 'frame', 'mel freq'));
+
+    document.getElementById('wavefiles').appendChild(playbtn);
+    rowDiv = document.createElement('div');
+    rowDiv.classList.add("row")
+
+    colDiv = document.createElement('div')
+    colDiv.classList.add("column")
+    colDiv.appendChild(timePlot)
+    rowDiv.appendChild(colDiv)
+
+    colDiv = document.createElement('div')
+    colDiv.classList.add("column")
+    colDiv.appendChild(melPlot)
+    rowDiv.appendChild(colDiv)
+
+    colDiv = document.createElement('div')
+    colDiv.classList.add("column")
+    colDiv.appendChild(logMelPlot)
+    rowDiv.appendChild(colDiv)
+
+    //document.getElementById('wavefiles').appendChild(timePlot);
+    //document.getElementById('wavefiles').appendChild(melPlot);
+    //document.getElementById('wavefiles').appendChild(logMelPlot);
+    document.getElementById('wavefiles').appendChild(rowDiv);
 }
 
 function toggleRecording( e ) {
@@ -115,7 +258,7 @@ function flatten(log_mels) {
     flatten_arry = []
     for(i = 0; i < MEL_SPEC_BINS; i++) {
         for(j = 0; j < log_mels.length; j++) {
-            flatten_arry.push((Math.log(log_mels[j][i] + bias) - zmuv_mean) / zmuv_std)
+            flatten_arry.push((Math.log(log_mels[j][i] + log_offset) - zmuv_mean) / zmuv_std)
         }
     }
     return flatten_arry
@@ -157,6 +300,8 @@ function gotStream(stream) {
             arrayBuffer = [...arrayBuffer, ...resampledMonoAudio]
             batchSize = Math.floor(arrayBuffer.length/windowBufferSize)
             // if we got batches * 750 ms seconds of buffer 
+            let batchBuffers = []
+            let batchMels = []
             if (arrayBuffer.length >= numOfBatches * windowBufferSize) {
                 let batch = 0
                 let dataProcessed, log_mels;
@@ -176,6 +321,8 @@ function gotStream(stream) {
                         nMels: MEL_SPEC_BINS,
                         nFft: NUM_FFTS
                     });
+                    batchBuffers.push(batchBuffer)
+                    batchMels.push(log_mels)
                     if (batch == 0) {
                         dataProcessed = []
                     }
@@ -198,6 +345,8 @@ function gotStream(stream) {
                     console.log("probabilities", probs)
                     console.log("predicted word", classes[class_idx])
                     if (classes[targetState] == classes[class_idx]) {
+                        bufferMap[`${classes[targetState]}_buffer`] = batchBuffers[Math.floor(i/classes.length)]
+                        bufferMap[`${classes[targetState]}_mels`] = batchMels[Math.floor(i/classes.length)]
                         console.log(classes[class_idx])
                         addprediction(classes[class_idx])
                         predictWords.push(classes[class_idx]) 
