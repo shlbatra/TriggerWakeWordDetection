@@ -229,7 +229,7 @@ Below are the methods used on live streaming audio on above model.
 - Model is trained on `hey fourth brain` - once those words are detected is sequence, for each detected wake word, a play button to listen to what sound was used to detect that word, and what mel spectrograms are used will be listed. 
 
 # Slides
-Please use [this](https://docs.google.com/presentation/d/e/2PACX-1vQkJ5OSajJQ_7y8JOXaydYKcDEb8vR1j_LjU9Y6ml0Ps8HZ7NocPluWZstHydTbGTWspvj6psS9OLvz/pub?start=false&loop=false&delayms=3000) link for slides 
+Please use this [link](https://docs.google.com/presentation/d/e/2PACX-1vQkJ5OSajJQ_7y8JOXaydYKcDEb8vR1j_LjU9Y6ml0Ps8HZ7NocPluWZstHydTbGTWspvj6psS9OLvz/pub?start=false&loop=false&delayms=3000) for slides 
 # Conclusion
 In this project, we have went through how to extract audio features from audio and train model and detect wake words by using end to end example with source code. Go through [wake_word_detection.ipynb](notebooks/wake_word_detection.ipynb) jupyter notebook for complete walk through of this project. 
 
