@@ -17,6 +17,8 @@
         - [Using Pyaudio](#using-pyaudio)
         - [Using web sockets](#using-web-sockets)
         - [Using onnx](#using-onnx)
+- [Demo](#demo)
+- [Slides](#slides)
 - [Conclusion](#conclusion)
 - [Enhancements](#enhancements)
 
@@ -197,6 +199,7 @@ Below are the methods used on live streaming audio on above model.
 - Capture audio buffer at client using [getUserMedia](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/getUserMedia), convert to array buffer
 - Used [fft.js](https://github.com/indutny/fft.js/blob/master/dist/fft.js) to compute [Fourier Transform](https://en.wikipedia.org/wiki/Fourier_transform)
 - Used methods from [Meganta.js audio utils](https://github.com/magenta/magenta-js/blob/master/music/src/core/audio_utils.ts) to compute audio transformations like Mel spectrograms
+    <img src="images/onnx-arch.png" width=400>
 - Below is the comparision of client side vs server side audio transformations <br>
     <img src="images/plots.png">
 - Client side code - [main.js](standalone/static/audio/main.js)
@@ -219,6 +222,14 @@ Below are the methods used on live streaming audio on above model.
 - Refer [standalone_no_flask](standalone_no_flask) for client version without flask, you can deploy on any static server, you can also deploy to [IPFS](https://ipfs.io/)
 - Recent version will show, plots and audio buffer for each wake word which model infered for, click on wake word button to know what buffer was infered for that word. 
     <img src="images/onnx-demo.png">
+
+# Demo
+- For live demo please refer this [link](https://wake.rajashekar.blog/)    
+- Allow microphone to capture audio
+- Model is trained on `hey fourth brain` - once those words are detected is sequence, for each detected wake word, a play button to listen to what sound was used to detect that word, and what mel spectrograms are used will be listed. 
+
+# Slides
+Please use [this](https://docs.google.com/presentation/d/e/2PACX-1vQkJ5OSajJQ_7y8JOXaydYKcDEb8vR1j_LjU9Y6ml0Ps8HZ7NocPluWZstHydTbGTWspvj6psS9OLvz/pub?start=false&loop=false&delayms=3000) link for slides 
 # Conclusion
 In this project, we have went through how to extract audio features from audio and train model and detect wake words by using end to end example with source code. Go through [wake_word_detection.ipynb](notebooks/wake_word_detection.ipynb) jupyter notebook for complete walk through of this project. 
 
