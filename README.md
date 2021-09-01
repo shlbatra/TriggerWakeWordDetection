@@ -144,17 +144,79 @@ Check for any data imbalance, if the dataset does not have enough samples contai
 - Used 20 epochs, below is how the train vs validation loss looks like without noise
     <img src="images/train_valid_no_noise.png" width=400>
 - As you can see, without noise, there is overfitting problem
-- With noise the below is how the train vs validation loss looks like <br>
+- Its resolved after adding noise, below is how the train vs validation loss looks like <br>
     <img src="images/train_valid_with_noise.png" width=400>
 - Code - [train.py](train/train.py) <br>
     <img src="images/train.png" width=200>
 
 ## Test Model
-Below is how model performed on test dataset <br>
+Below is how model performed on test dataset, model acheived 87% accuracy <br>
     <img src="images/test.png" width=400>
 ## Inference
-
+Below are the methods used on live streaming audio on above model. 
+### Using Pyaudio
+- Used [Pyaudio](https://pypi.org/project/PyAudio/), to get input from microphone
+- Capture 750ms window of audio buffer 
+- After n batches, do transformations and infer on model
+- Code - [infer.py](train/infer.py) <br>
+- <img src="images/pyaudio.png" width=300>
+### Using web sockets
+- Used [Flask Socketio](https://flask-socketio.readthedocs.io/en/latest/) at server level to capture audio buffer from client. 
+- At Client, used [socket.io](https://socket.io/docs/v4/client-installation/) at client level to send audio buffer through socket connection.
+- Capture audio buffer using [getUserMedia](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/getUserMedia), convert to array buffer and stream to server.
+- Inference will happen at server, after n batches of 750ms window
+- If sequence detected, send detected prompt to client. <br>
+    <img src="images/websockets.png" width=400>
+- Server Code - [application.py](server/application.py)
+- Client Code - [main.js](server/static/audio/main.js)
+- To run this locally 
+    ```
+    cd server
+    python -m venv .venv
+    pip install -r requirements.txt
+    FLASK_ENV=development FLASK_APP=application.py .venv/bin/flask run --port 8011
+    ```
+    <img src="images/websockets-demo.png">
+- Use [Dockerfile](server/Dockerfile) & [Dockerrun.aws.json](server/Dockerrun.aws.json) to containerize the app and deploy to [AWS Elastic BeanStalk](https://aws.amazon.com/elasticbeanstalk/)
+- Elastic Beanstalk initialize app
+    ```
+    eb init -p docker-19.03.13-ce wakebot-app --region us-west-2
+    ```
+- Create Elastic Beanstalk instance
+    ```
+    eb create wakebot-app --instance_type t2.large --max-instances 1
+    ```
+- Disadvantage of above method might be of privacy, since we are sending the audio buffer to server for inference
+### Using ONNX
+- Used [Pytorch onnx](https://pytorch.org/docs/stable/onnx.html) to convert pytorch model to onnx model
+- Pytorch to onnx convert code - [convert_to_onnx.py](server/utils/convert_to_onnx.py)
+- Once converted, onnx model can be used at client side to do inference
+- Client side, used [onnx.js](https://github.com/microsoft/onnxjs) to do inference at client level
+- Capture audio buffer at client using [getUserMedia](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/getUserMedia), convert to array buffer
+- Used [fft.js](https://github.com/indutny/fft.js/blob/master/dist/fft.js) to compute [Fourier Transform](https://en.wikipedia.org/wiki/Fourier_transform)
+- Used methods from [Meganta.js audio utils](https://github.com/magenta/magenta-js/blob/master/music/src/core/audio_utils.ts) to compute audio transformations like Mel spectrograms
+- Below is the comparision of client side vs server side audio transformations <br>
+    <img src="images/plots.png">
+- Client side code - [main.js](standalone/static/audio/main.js)
+- To run locally 
+    ```
+    cd standalone
+    python -m venv .venv
+    pip install -r requirements.txt
+    FLASK_ENV=development FLASK_APP=application.py .venv/bin/flask run --port 8011
+    ```
+    <img src="images/onnx.png">
+- To deploy to AWS Elastic Beanstalk, first initialize app
+    ```
+    eb init -p python-3.7 wakebot-std-app --region us-west-2
+    ```
+- Create Elastic Beanstalk instance
+    ```
+    eb create wakebot-std-app --instance_type t2.large --max-instances 1
+    ```
+- Refer [standalone_no_flask](standalone_no_flask) for client version without flask, you can deploy on any static server, you can also deploy to [IPFS](https://ipfs.io/)
+- Recent version will show, plots and audio buffer for each wake word which model infered for, click on wake word button to know what buffer was infered for that word. 
+    <img src="images/onnx-demo.png">
 # Conclusion
-
 
 # Enhancements
