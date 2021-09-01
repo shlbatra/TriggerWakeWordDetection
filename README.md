@@ -1,3 +1,4 @@
+<h1 style="text-align: center;">Wake Word Detector</h1>
 <img src="images/wake_word_detect.png">
 
 # Table of Contents
@@ -42,23 +43,23 @@ Used [Mozilla Common Voice dataset](https://commonvoice.mozilla.org/en/datasets)
 ## Word Alignment
 - For positive dataset, used [Montreal Forced Alignment](https://github.com/MontrealCorpusTools/Montreal-Forced-Aligner) to get timestamps of each word in audio.
 - Download the [stable version](https://github.com/MontrealCorpusTools/Montreal-Forced-Aligner/releases)
-    ```
+    ```bash
     wget https://github.com/MontrealCorpusTools/Montreal-Forced-Aligner/releases/download/v1.0.1/montreal-forced-aligner_linux.tar.gz
     tar -xf montreal-forced-aligner_linux.tar.gz
     rm montreal-forced-aligner_linux.tar.gz
     ```
 - Download the [Librispeech Lexicon dictionary](https://www.openslr.org/resources/11/librispeech-lexicon.txt)
-    ```
+    ```bash
     wget https://www.openslr.org/resources/11/librispeech-lexicon.txt
     ```
 - Known issues in MFA
-    ```
+    ```bash
     # known mfa issue https://github.com/MontrealCorpusTools/Montreal-Forced-Aligner/issues/109
     cp montreal-forced-aligner/lib/libpython3.6m.so.1.0 montreal-forced-aligner/lib/libpython3.6m.so
     cd montreal-forced-aligner/lib/thirdparty/bin && rm libopenblas.so.0 && ln -s ../../libopenblasp-r0-8dca6697.3.0.dev.so libopenblas.so.0
     ```
 - Creating aligned data
-    ```
+    ```bash
     montreal-forced-aligner\bin\mfa_align -q positive\audio librispeech-lexicon.txt montreal-forced-aligner\pretrained_models\english.zip aligned_data
     ```
 
@@ -119,6 +120,7 @@ Check for any data imbalance, if the dataset does not have enough samples contai
 
 ## Audio transformations
 - Used [MelSpectrogram](https://pytorch.org/audio/stable/transforms.html#melspectrogram) from Pytorch audio to generate mel spectrogram
+    <img align="right" src="images/transformers.png" width=200>
 - Hyperparameters
     ```
     Sample rate = 16000 (16kHz)
@@ -129,29 +131,29 @@ Check for any data imbalance, if the dataset does not have enough samples contai
     ```
 - Used Zero Mean Unit Variance to scale the values
 - Code [transformers.py](train/transformers.py) and [audio_collator.py](train/audio_collator.py) <br>
-    <img src="images/transformers.png" width=250>
 
 ## Define model architecture
 - Given above transformations, Mel spectrogram of size `40x61` will be fed to model
 - Below is the CNN model used <br>
-    <img src="images/model.png" width=450>
+    <img src="images/model.png" width=400>
 - Code [model.py](train/model.py)
 - Below is the CNN model summary <br>
-    <img src="images/modelsummary.png" width=450>
+    <img src="images/modelsummary.png" width=400>
 
 ## Train model
-- Used batch size as 16, Tensor of size `[16, 1, 40, 61]` will be fed to Model
-- Used 20 epochs, below is how the train vs validation loss looks like without noise
-    <img src="images/train_valid_no_noise.png" width=400>
+- Used batch size as 16, Tensor of size `[16, 1, 40, 61]` will be fed to Model 
+    <img align="right" src="images/train.png" width=150>
+- Used 20 epochs, below is how the train vs validation loss looks like without noise <br>
+    <img src="images/train_valid_no_noise.png" width=300>
 - As you can see, without noise, there is overfitting problem
 - Its resolved after adding noise, below is how the train vs validation loss looks like <br>
-    <img src="images/train_valid_with_noise.png" width=400>
+    <img src="images/train_valid_with_noise.png" width=300>
 - Code - [train.py](train/train.py) <br>
-    <img src="images/train.png" width=200>
 
 ## Test Model
 Below is how model performed on test dataset, model acheived 87% accuracy <br>
-    <img src="images/test.png" width=400>
+    <img src="images/test1.png" width=350>
+    <img src="images/test2.png" width=350>
 ## Inference
 Below are the methods used on live streaming audio on above model. 
 ### Using Pyaudio
@@ -170,7 +172,7 @@ Below are the methods used on live streaming audio on above model.
 - Server Code - [application.py](server/application.py)
 - Client Code - [main.js](server/static/audio/main.js)
 - To run this locally 
-    ```
+    ```bash
     cd server
     python -m venv .venv
     pip install -r requirements.txt
@@ -179,11 +181,11 @@ Below are the methods used on live streaming audio on above model.
     <img src="images/websockets-demo.png">
 - Use [Dockerfile](server/Dockerfile) & [Dockerrun.aws.json](server/Dockerrun.aws.json) to containerize the app and deploy to [AWS Elastic BeanStalk](https://aws.amazon.com/elasticbeanstalk/)
 - Elastic Beanstalk initialize app
-    ```
+    ```bash
     eb init -p docker-19.03.13-ce wakebot-app --region us-west-2
     ```
 - Create Elastic Beanstalk instance
-    ```
+    ```bash
     eb create wakebot-app --instance_type t2.large --max-instances 1
     ```
 - Disadvantage of above method might be of privacy, since we are sending the audio buffer to server for inference
@@ -199,7 +201,7 @@ Below are the methods used on live streaming audio on above model.
     <img src="images/plots.png">
 - Client side code - [main.js](standalone/static/audio/main.js)
 - To run locally 
-    ```
+    ```bash
     cd standalone
     python -m venv .venv
     pip install -r requirements.txt
@@ -207,11 +209,11 @@ Below are the methods used on live streaming audio on above model.
     ```
     <img src="images/onnx.png">
 - To deploy to AWS Elastic Beanstalk, first initialize app
-    ```
+    ```bash
     eb init -p python-3.7 wakebot-std-app --region us-west-2
     ```
 - Create Elastic Beanstalk instance
-    ```
+    ```bash
     eb create wakebot-std-app --instance_type t2.large --max-instances 1
     ```
 - Refer [standalone_no_flask](standalone_no_flask) for client version without flask, you can deploy on any static server, you can also deploy to [IPFS](https://ipfs.io/)
