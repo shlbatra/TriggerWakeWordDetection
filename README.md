@@ -16,18 +16,18 @@ To create a open-source custom wake word detector, which will take audio as inpu
 Goal is to provide configurable custom detector so that anyone can use it on their own application to perform operations, once configured wake words are detected.
 
 # Implementation
-- [Prepare labelled dataset from Mozilla Common Voice](#prepare-labelled-dataset-from-mozilla-common-voice)
-- [Do word alignment](#do-word-alignment)
-- [Fix any data imbalance](#fix-any-data-imbalance)
+- [Preparing labelled dataset](#preparing-labelled-dataset)
+- [Word Alignment](#word-alignment)
+- [Fix data imbalance](#fix-data-imbalance)
 - [Extract audio features](#extract-audio-features)
-- [Do transformations](#do-transformations)
+- [Audio transformations](#audio-transformations)
 - [Define model architecture](#define-model-architecture)
-- [Train model using train and validation dataset](#train-model-using-train-and-validation-dataset)
-- [Get results using test dataset](#get-results-using-test-dataset)
-- [Deploy model and do Inference](#deploy-model-and-do-inference)
+- [Train model](#train-model)
+- [Test Model](#test-model)
+- [Inference](#inference)
 
-## Prepare labelled dataset from Mozilla Common Voice
-Used Mozilla Common Voice dataset, 
+## Preparing labelled dataset
+Used [Mozilla Common Voice dataset](https://commonvoice.mozilla.org/en/datasets), 
 - Go through each wake word and check transcripts for match
 - If found then it will be in positive dataset
 - If not found then it will be in negative dataset
@@ -36,7 +36,7 @@ Used Mozilla Common Voice dataset,
 - Code reference [fetch_dataset_mcv.py](train/fetch_dataset_mcv.py)
 <img src="images/mcv-dataset.png">
 
-## Do word alignment
+## Word Alignment
 - For positive dataset, used [Montreal Forced Alignment](https://github.com/MontrealCorpusTools/Montreal-Forced-Aligner) to get timestamps of each word in audio.
 - Download the [stable version](https://github.com/MontrealCorpusTools/Montreal-Forced-Aligner/releases)
     ```
@@ -63,7 +63,7 @@ Used Mozilla Common Voice dataset,
 Generated textgrid file 
 <img src = "images/textgrid.png">
 
-## Fix any data imbalance
+## Fix data imbalance
 Check for any data imbalance, if the dataset does not have enough samples containing wake words, consider using text to speech services to generate more samples. 
 - Used Google Text To Speech Api, set environment variable `GOOGLE_APPLICATION_CREDENTIALS` with your key.
 - Used various speed rates, pitches and voices to generate data for wake words. 
@@ -114,13 +114,42 @@ Check for any data imbalance, if the dataset does not have enough samples contai
     ```
     <img src="images/logmelspectrogram.png" width=400>
 
+## Audio transformations
+- Used [MelSpectrogram](https://pytorch.org/audio/stable/transforms.html#melspectrogram) from Pytorch audio to generate mel spectrogram
+- Hyperparameters
+    ```
+    Sample rate = 16000 (16kHz)
+    Max window length = 750 ms (12000)
+    Number of mel bins = 40
+    Hop length = 200
+    Mel Spectrogram matrix size = 40 x 61
+    ```
+- Used Zero Mean Unit Variance to scale the values
+- Code [transformers.py](train/transformers.py) and [audio_collator.py](train/audio_collator.py) <br>
+    <img src="images/transformers.png" width=400>
 
-## Do transformations
 ## Define model architecture
-## Train model using train and validation dataset
-## Get results using test dataset
-## Deploy model and do Inference
+- Given above transformations, Mel spectrogram of size `40x61` will be fed to model
+- Below is the CNN model used
+    <img src="images/model.png" with=600>
+- Code [model.py](train/model.py)
+- Below is the CNN model summary <br>
+    <img src="images/modelsummary.png" width=600>
 
+## Train model
+- Used batch size as 16, Tensor of size `[16, 1, 40, 61]` will be fed to Model
+- Used 20 epochs, below is how the train vs validation loss looks like without noise
+    <img src="images/train_valid_no_noise.png" width=400>
+- As you can see, without noise, there is overfitting problem
+- With noise the below is how the train vs validation loss looks like <br>
+    <img src="images/train_valid_with_noise.png" width=400>
+- Code - [train.py](train/train.py) <br>
+    <img src="images/train.png" width=200>
+
+## Test Model
+Below is how model performed on test dataset <br>
+    <img src="images/test.png" width=400>
+## Inference
 
 # Conclusion
 
