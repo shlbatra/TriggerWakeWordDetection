@@ -4,6 +4,18 @@
 - [Background](#background)
 - [Introduction](#introduction)
 - [Implementation](#implementation)
+    - [Preparing labelled dataset](#preparing-labelled-dataset)
+    - [Word Alignment](#word-alignment)
+    - [Fix data imbalance](#fix-data-imbalance)
+    - [Extract audio features](#extract-audio-features)
+    - [Audio transformations](#audio-transformations)
+    - [Define model architecture](#define-model-architecture)
+    - [Train model](#train-model)
+    - [Test Model](#test-model)
+    - [Inference](#inference)
+        - [Using Pyaudio](#using-pyaudio)
+        - [Using web sockets](#using-web-sockets)
+        - [Using onnx](#using-onnx)
 - [Conclusion](#conclusion)
 - [Enhancements](#enhancements)
 
@@ -16,15 +28,6 @@ To create a open-source custom wake word detector, which will take audio as inpu
 Goal is to provide configurable custom detector so that anyone can use it on their own application to perform operations, once configured wake words are detected.
 
 # Implementation
-- [Preparing labelled dataset](#preparing-labelled-dataset)
-- [Word Alignment](#word-alignment)
-- [Fix data imbalance](#fix-data-imbalance)
-- [Extract audio features](#extract-audio-features)
-- [Audio transformations](#audio-transformations)
-- [Define model architecture](#define-model-architecture)
-- [Train model](#train-model)
-- [Test Model](#test-model)
-- [Inference](#inference)
 
 ## Preparing labelled dataset
 Used [Mozilla Common Voice dataset](https://commonvoice.mozilla.org/en/datasets), 
@@ -126,15 +129,15 @@ Check for any data imbalance, if the dataset does not have enough samples contai
     ```
 - Used Zero Mean Unit Variance to scale the values
 - Code [transformers.py](train/transformers.py) and [audio_collator.py](train/audio_collator.py) <br>
-    <img src="images/transformers.png" width=400>
+    <img src="images/transformers.png" width=250>
 
 ## Define model architecture
 - Given above transformations, Mel spectrogram of size `40x61` will be fed to model
-- Below is the CNN model used
-    <img src="images/model.png" with=600>
+- Below is the CNN model used <br>
+    <img src="images/model.png" width=450>
 - Code [model.py](train/model.py)
 - Below is the CNN model summary <br>
-    <img src="images/modelsummary.png" width=600>
+    <img src="images/modelsummary.png" width=450>
 
 ## Train model
 - Used batch size as 16, Tensor of size `[16, 1, 40, 61]` will be fed to Model
