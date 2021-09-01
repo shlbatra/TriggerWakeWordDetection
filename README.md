@@ -218,5 +218,11 @@ Below are the methods used on live streaming audio on above model.
 - Recent version will show, plots and audio buffer for each wake word which model infered for, click on wake word button to know what buffer was infered for that word. 
     <img src="images/onnx-demo.png">
 # Conclusion
+In this project, we have went through how to extract audio features from audio and train model and detect wake words by using end to end example with source code. Go through [wake_word_detection.ipynb](notebooks/wake_word_detection.ipynb) jupyter notebook for complete walk through of this project. 
+
 
 # Enhancements
+- Explore different number of mels, in this project we used 40 as number of mels, we can use different number to see whether this will improve accuracy or not, this can be in range of 32 to 128.
+- Use RNN or LSTM or GRU or attention to see whether we can get better results
+- Check by computing MFCCs (which is computed after Mel spectrograms) and see if we see any improvements. 
+- Use different audio augmentation methods like [TimeStrech, TimeMasking, FrequencyMasking](https://pytorch.org/tutorials/beginner/audio_preprocessing_tutorial.html#specaugment)
