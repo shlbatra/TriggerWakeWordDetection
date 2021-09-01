@@ -1,5 +1,12 @@
 <img src="images/wake_word_detect.png">
 
+# Table of Contents
+- [Background](#background)
+- [Introduction](#introduction)
+- [Implementation](#implementation)
+- [Conclusion](#conclusion)
+- [Enhancements](#enhancements)
+
 # Background
 Personal Assistant devices like Google Home, Alexa and Apple Homepod, will be constantly listening for specific set of wake words like “Ok, Google” or “Alexa” or “Hey Siri”, and once these sequence of words are detected it would prompt to user for next commands and respond to them appropriately.
 
@@ -74,7 +81,7 @@ Check for any data imbalance, if the dataset does not have enough samples contai
     plt.xlabel('Time (samples)')
     plt.ylabel('Amplitude')
     ```
-    <img src='images/signal.png'>
+    <img src='images/signal.png' width=400>
 - When Short-time Fourier transform (STFT) computed, below is how spectrogram looks like
     ```python
     from torchaudio.transforms import Spectrogram
@@ -85,7 +92,7 @@ Check for any data imbalance, if the dataset does not have enough samples contai
     hey_spectrogram = spectrogram(inp.float())
     plot_spectrogram(hey_spectrogram.cpu(), title="Spectrogram")
     ```
-    <img src='images/spectrogram.png'>
+    <img src='images/spectrogram.png' width=400>
 - A mel spectrogram is a spectrogram where the frequencies are converted to the mel scale.
     ```python
     from torchaudio.transforms import MelSpectrogram
@@ -98,14 +105,14 @@ Check for any data imbalance, if the dataset does not have enough samples contai
     hey_mels_slaney = mel_spectrogram(inp.float())
     plot_spectrogram(hey_mels_slaney.cpu(), title="MelSpectrogram", ylabel='mel freq')
     ```
-    <img src="images/melspectrogram.png">
+    <img src="images/melspectrogram.png" width=400>
 - After adding offset and taking log on mels, below is how final mel spectrogram looks like
     ```python
     log_offset = 1e-7
     log_hey_mel_specgram = torch.log(hey_mels_slaney + log_offset)
     plot_spectrogram(log_hey_mel_specgram.cpu(), title="MelSpectrogram (Log)", ylabel='mel freq')
     ```
-    <img src="images/logmelspectrogram.png">
+    <img src="images/logmelspectrogram.png" width=400>
 
 
 ## Do transformations
