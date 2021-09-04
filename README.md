@@ -4,6 +4,7 @@
 # Table of Contents
 - [Background](#background)
 - [Introduction](#introduction)
+- [Related Work](#related-work)
 - [Implementation](#implementation)
     - [Preparing labelled dataset](#preparing-labelled-dataset)
     - [Word Alignment](#word-alignment)
@@ -29,6 +30,12 @@ Personal Assistant devices like Google Home, Alexa and Apple Homepod, will be co
 To create a open-source custom wake word detector, which will take audio as input and once the sequence of words are detected then prompt to the user. <br>
 
 Goal is to provide configurable custom detector so that anyone can use it on their own application to perform operations, once configured wake words are detected.
+
+# Related Work
+- [Howl](https://arxiv.org/abs/2008.09606) - an open-source wake word detection toolkit with native support for open speech datasets, like Mozilla Common Voice and Google Speech Commands. This project used Pytorch Library and built model using res8 and the model was used for Firefox Voice application. Used 80 dimensional Log Mel Spectrograms with 200 hop length, which yeilded to 80 x 61 input size for each 750ms audio sample.
+- [Honkling](https://aclanthology.org/D19-3016/) - Honkling, a novel, JavaScript-based keyword spotting system. Purely written in Javascript and supports different models using TensorFlow.js. Used 40-dimensional Mel-frequency cepstral coefficients (MFCCs), yeilding 40 x 101 input size for each 1 second audio sample. Used [Meyda: an audio feature extraction library for the Web
+Audio API](http://doc.gold.ac.uk/~mu202hr/publications/RawlinsonSegalFiala_WAC2015.pdf) for audio feature extraction. 
+- In this project, we used Pytorch Libraries to build model and extract features of audio, used 40 mel banks with 200 hop length, which yielded to 40 x 61 input size for each 750ms audio sample, which is fed to CNN model. For inference, did both server side inference and client side inference. For Server side inference  audio is streamed to server from Javascript application using web sockets and on KWS notify Javascript application. For Client side inference, Pytorch model was converted to [Open Neural Network Exchange (ONNX)](https://onnx.ai/) model and deployed onnx model in Javascript application, inference will be done using [microsoft/onnxjs](https://github.com/microsoft/onnxjs). For audio feature extraction, Meyda javascript library was only giving MFCCs, but the model was trained on Log Mel Spectrograms, so used the methods implemented in [magenta-js](https://github.com/magenta/magenta-js/blob/master/music/src/core/audio_utils.ts) to extract Log Mel Spectrograms. For client side inference, no audio stream is sent to server, thus privacy is maintained. 
 
 # Implementation
 
