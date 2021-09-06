@@ -22,7 +22,7 @@ const MEL_SPEC_BINS = 40;
 const NUM_FFTS = 512;
 const audioFloatSize = 32767
 const sampleRate = 16000
-const numOfBatches = 1
+const numOfBatches = 2
 
 let predictWords = []
 let arrayBuffer = []
