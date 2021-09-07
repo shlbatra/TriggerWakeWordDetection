@@ -194,7 +194,7 @@ function toggleRecording( e ) {
     } else {
         // start recording
         document.getElementById('wavefiles').innerHTML = ""
-        addprediction('Listening for wake words ...')
+        addprediction('Listening for wake words [hey, fourth, brain] ...')
         e.classList.add('recording');
         recording = true;
     }

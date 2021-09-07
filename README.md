@@ -18,6 +18,8 @@
         - [Using Pyaudio](#using-pyaudio)
         - [Using web sockets](#using-web-sockets)
         - [Using onnx](#using-onnx)
+        - [Using tensorflowjs](#using-tensorflowjs)
+        - [Using tflite](#using-tflite)
 - [Demo](#demo)
 - [Slides](#slides)
 - [Conclusion](#conclusion)
@@ -35,7 +37,7 @@ Goal is to provide configurable custom detector so that anyone can use it on the
 - [Howl](https://arxiv.org/abs/2008.09606) - an open-source wake word detection toolkit with native support for open speech datasets, like Mozilla Common Voice and Google Speech Commands. This project used Pytorch Library and built model using res8 and the model was used for Firefox Voice application. Used 80 dimensional Log Mel Spectrograms with 200 hop length, which yeilded to 80 x 61 input size for each 750ms audio sample.
 - [Honkling](https://aclanthology.org/D19-3016/) - Honkling, a novel, JavaScript-based keyword spotting system. Purely written in Javascript and supports different models using TensorFlow.js. Used 40-dimensional Mel-frequency cepstral coefficients (MFCCs), yeilding 40 x 101 input size for each 1 second audio sample. Used [Meyda: an audio feature extraction library for the Web
 Audio API](http://doc.gold.ac.uk/~mu202hr/publications/RawlinsonSegalFiala_WAC2015.pdf) for audio feature extraction. 
-- In this project, we used Pytorch Libraries to build model and extract features of audio, used 40 mel banks with 200 hop length, which yielded to 40 x 61 input size for each 750ms audio sample, which is fed to CNN model. For inference, did both server side inference and client side inference. For Server side inference  audio is streamed to server from Javascript application using web sockets and on KWS notify Javascript application. For Client side inference, Pytorch model was converted to [Open Neural Network Exchange (ONNX)](https://onnx.ai/) model and deployed onnx model in Javascript application, inference will be done using [microsoft/onnxjs](https://github.com/microsoft/onnxjs). For audio feature extraction, Meyda javascript library was only giving MFCCs, but the model was trained on Log Mel Spectrograms, so used the methods implemented in [magenta-js](https://github.com/magenta/magenta-js/blob/master/music/src/core/audio_utils.ts) to extract Log Mel Spectrograms. For client side inference, no audio stream is sent to server, thus privacy is maintained. 
+- In this project, we used Pytorch Libraries to build model and extract features of audio, used 40 mel banks with 200 hop length, which yielded to 40 x 61 input size for each 750ms audio sample, which is fed to CNN model. For inference, did both server side inference and client side inference. For Server side inference  audio is streamed to server from Javascript application using web sockets and on KWS notify Javascript application. For Client side inference, Pytorch model was converted to [Open Neural Network Exchange (ONNX)](https://onnx.ai/) model and deployed onnx model in Javascript application, inference will be done using [microsoft/onnxjs](https://github.com/microsoft/onnxjs). For audio feature extraction, Meyda javascript library was only giving MFCCs, but the model was trained on Log Mel Spectrograms, so used the methods implemented in [magenta-js](https://github.com/magenta/magenta-js/blob/master/music/src/core/audio_utils.ts) to extract Log Mel Spectrograms. For client side inference, no audio stream is sent to server, thus privacy is maintained. Onnx model was also coverted to tensorflow & tf lite model and inference was done using tfjs. 
 
 # Implementation
 
@@ -229,9 +231,158 @@ Below are the methods used on live streaming audio on above model.
 - Refer [standalone_no_flask](standalone_no_flask) for client version without flask, you can deploy on any static server, you can also deploy to [IPFS](https://ipfs.io/)
 - Recent version will show, plots and audio buffer for each wake word which model infered for, click on wake word button to know what buffer was infered for that word. 
     <img src="images/onnx-demo.png">
+### Using tensorflowjs
+- Used [onnx-tensorflow](https://github.com/onnx/onnx-tensorflow) to convert onnx model to tensorflow model
+- onnx to tensorflow convert code - [convert_onnx_to_tf.py](onnx_to_tf/convert_onnx_to_tf.py)
+    ```
+    onnx_model = onnx.load("onnx_model.onnx")  # load onnx model
+    tf_rep = prepare(onnx_model)  # prepare tf representation
+
+    # Input nodes to the model
+    print("inputs:", tf_rep.inputs)
+
+    # Output nodes from the model
+    print("outputs:", tf_rep.outputs)
+
+    # All nodes in the model
+    print("tensor_dict:")
+    print(tf_rep.tensor_dict)
+
+    tf_rep.export_graph("hey_fourth_brain")  # export the model
+    ```
+- Verify the model using below command 
+    ```
+    python .venv/lib/python3.8/site-packages/tensorflow/python/tools/saved_model_cli.py show --dir hey_fourth_brain --all
+    ```
+    Output
+    ```
+    MetaGraphDef with tag-set: 'serve' contains the following SignatureDefs:
+
+    signature_def['__saved_model_init_op']:
+    The given SavedModel SignatureDef contains the following input(s):
+    The given SavedModel SignatureDef contains the following output(s):
+        outputs['__saved_model_init_op'] tensor_info:
+            dtype: DT_INVALID
+            shape: unknown_rank
+            name: NoOp
+    Method name is: 
+
+    signature_def['serving_default']:
+    The given SavedModel SignatureDef contains the following input(s):
+        inputs['input'] tensor_info:
+            dtype: DT_FLOAT
+            shape: (-1, 1, 40, 61)
+            name: serving_default_input:0
+    The given SavedModel SignatureDef contains the following output(s):
+        outputs['output'] tensor_info:
+            dtype: DT_FLOAT
+            shape: (-1, 4)
+            name: PartitionedCall:0
+    Method name is: tensorflow/serving/predict
+
+    Defined Functions:
+    Function Name: '__call__'
+            Named Argument #1
+            input
+
+    Function Name: 'gen_tensor_dict'
+    ```
+- Refer [onnx_to_tf](onnx_to_tf/hey_fourth_brain) for generated files
+- Test converted model using [test_tf.py](onnx_to_tf/test_tf.py)
+- Used [tensorflowjs[wizard]](https://github.com/tensorflow/tfjs/blob/master/tfjs-converter/README.md) to convert `savedModel` to web model
+    ```
+    (.venv) (base) ➜  onnx_to_tf git:(main) ✗ tensorflowjs_wizard 
+    Welcome to TensorFlow.js Converter.
+    ? Please provide the path of model file or the directory that contains model files. 
+    If you are converting TFHub module please provide the URL.  hey_fourth_brain
+    ? What is your input model format? (auto-detected format is marked with *)  Tensorflow Saved Model *
+    ? What is tags for the saved model?  serve
+    ? What is signature name of the model?  signature name: serving_default
+    ? Do you want to compress the model? (this will decrease the model precision.)  No compression (Higher accuracy)
+    ? Please enter shard size (in bytes) of the weight files?  4194304
+    ? Do you want to skip op validation? 
+    This will allow conversion of unsupported ops, 
+    you can implement them as custom ops in tfjs-converter.  No
+    ? Do you want to strip debug ops? 
+    This will improve model execution performance.  Yes
+    ? Do you want to enable Control Flow V2 ops? 
+    This will improve branch and loop execution performance.  Yes
+    ? Do you want to provide metadata? 
+    Provide your own metadata in the form: 
+    metadata_key:path/metadata.json 
+    Separate multiple metadata by comma.  
+    ? Which directory do you want to save the converted model in?  web_model
+    converter command generated:
+    tensorflowjs_converter --control_flow_v2=True --input_format=tf_saved_model --metadata= --saved_model_tags=serve --signature_name=serving_default --strip_debug_ops=True --weight_shard_size_bytes=4194304 hey_fourth_brain web_model
+
+    ...
+    File(s) generated by conversion:
+    Filename                           Size(bytes)
+    group1-shard1of1.bin                729244
+    model.json                          28812
+    Total size:                         758056
+    ```
+- Once above step is done, copy the files to web application
+    Example - 
+    ```
+    ├── index.html
+    └── static
+        └── audio
+            ├── audio_utils.js
+            ├── fft.js
+            ├── main.js
+            ├── mic128.png
+            ├── model
+            │   ├── group1-shard1of1.bin
+            │   └── model.json
+            ├── prompt.mp3
+            └── styles.css
+    ```
+- Client side used [tfjs](https://github.com/tensorflow/tfjs) to load model and do inference
+- Loading the tensorflow model 
+    ```
+    let tfModel;
+    async function loadModel() {
+        tfModel = await tf.loadGraphModel('static/audio/model/model.json');
+    }
+    loadModel()
+    ```
+- Do inference using above model
+    ```
+    let outputTensor = tf.tidy(() => {
+    let inputTensor = tf.tensor(dataProcessed, [batch, 1, MEL_SPEC_BINS, dataProcessed.length/(batch * MEL_SPEC_BINS)], 'float32');
+    let outputTensor = tfModel.predict(inputTensor);
+        return outputTensor
+    });
+    let outputData = await outputTensor.data();
+    ```
+### Using tflite
+- Once tensorflow model is created, it can be converted to tflite, using below code
+    ```
+    model = tf.saved_model.load("hey_fourth_brain")
+    input_shape = [1, 1, 40, 61]
+    func = tf.function(model).get_concrete_function(input=tf.TensorSpec(shape=input_shape, dtype=np.float32, name="input"))
+    converter = tf.lite.TFLiteConverter.from_concrete_functions([func])
+    tflite_model = converter.convert()
+    open("hey_fourth_brain.tflite", "wb").write(tflite_model)
+    ```
+- Note: `tf.lite.TFLiteConverter.from_saved_model("hey_fourth_brain")` did not work, as it was throwing `conv.cc:349 input->dims->data[3] != filter->dims->data[3] (0 != 1)` on inference, so used above method.
+- copy the tflite model to web application
+- Used [tflite js](https://github.com/tensorflow/tfjs/tree/master/tfjs-tflite) to load model and do inference
+- Loading tflite model 
+    ```
+    let tfliteModel;
+    async function loadModel() {
+        tfliteModel = await tflite.loadTFLiteModel('static/audio/hey_fourth_brain.tflite');
+    }
+    loadModel()
+    ```
 
 # Demo
-- For live demo please refer this [link](https://wake.rajashekar.blog/)    
+- For live demo 
+    - ONNX version -[https://wake.rajashekar.blog](https://wake.rajashekar.blog)    
+    - Tensorflow js version - [https://wake-tf.rajashekar.blog](https://wake-tf.rajashekar.blog)
+    - Tensorflow lite js version - [https://wake-tflite.rajashekar.blog](https://wake-tflite.rajashekar.blog) 
 - Allow microphone to capture audio
 - Model is trained on `hey fourth brain` - once those words are detected is sequence, for each detected wake word, a play button to listen to what sound was used to detect that word, and what mel spectrograms are used will be listed. 
 

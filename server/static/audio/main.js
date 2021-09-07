@@ -37,7 +37,7 @@ function toggleRecording( e ) {
     } else {
         // start recording
         document.getElementById('wavefiles').innerHTML = ""
-        addprediction('Listening for wake words ...')
+        addprediction('Listening for wake words [hey, fourth, brain] ...')
         e.classList.add('recording');
         recording = true;
         socketio.emit('start-recording', {numChannels: channels, bufferSize: bufferSize, bps: 16, fps: parseInt(audioContext.sampleRate)});
