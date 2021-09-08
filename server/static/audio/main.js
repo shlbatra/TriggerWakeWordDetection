@@ -12,21 +12,90 @@ var socketio = io.connect(location.origin + '/audio');
 
 const bufferSize = 1024
 const channels = 1
+const sampleRate = 16000
 
-addprediction = word => {
-    if (word.endsWith('detected')) {
-        // play prompt
-        let prompt = new Audio("static/audio/prompt.mp3")
-        prompt.play()
-        // stop recording
-        document.getElementById("record").click();
-    } 
-    words = document.createElement('p');
-    words.innerHTML = '<b>' + word + '</b>';
-    document.getElementById('wavefiles').appendChild(words);
+const wakeWords = ["hey", "fourth", "brain"]
+
+let bufferMap = {}
+
+addprediction = wordJson => {
+    word = wordJson['word']
+    if(wakeWords.filter(i => i == word).length) {
+        addWordSummary(wordJson)
+    } else {
+        if (word.endsWith('detected')) {
+            // play prompt
+            let prompt = new Audio("static/audio/prompt.mp3")
+            prompt.play()
+            // stop recording
+            document.getElementById("record").click();
+        } 
+        words = document.createElement('p');
+        words.innerHTML = '<b>' + word + '</b>';
+        document.getElementById('wavefiles').appendChild(words);
+    }
 }
 
-socketio.on('add-prediction', word => addprediction(word));
+
+const addWordSummary = function(wordJson) {
+    word = wordJson['word']
+    // add buffer
+    addAudioBuffer(wordJson)
+    // add images
+    timePlot = new Image()
+    timePlot.src = `data:image/jpg;base64,${wordJson['time']}`
+    melPlot = new Image()
+    melPlot.src = `data:image/jpg;base64,${wordJson['mel']}`
+    //logMelPlot = new Image()
+    //logMelPlot.src = `data:image/jpg;base64,${wordJson['logmel']}`
+
+    rowDiv = document.createElement('div');
+    rowDiv.classList.add("row")
+
+    colDiv = document.createElement('div')
+    colDiv.classList.add("column")
+    colDiv.appendChild(timePlot)
+    rowDiv.appendChild(colDiv)
+
+    colDiv = document.createElement('div')
+    colDiv.classList.add("column")
+    colDiv.appendChild(melPlot)
+    rowDiv.appendChild(colDiv)
+
+    // colDiv = document.createElement('div')
+    // colDiv.classList.add("column")
+    // colDiv.appendChild(logMelPlot)
+    // rowDiv.appendChild(colDiv)
+
+    document.getElementById('wavefiles').appendChild(rowDiv);
+
+}
+
+
+function playBuffer(buffer) {
+    var audioBuffer = audioContext.createBuffer(1, buffer.length, sampleRate);
+    var audioBufferData = audioBuffer.getChannelData(0);
+    audioBufferData.set(buffer);
+    var source = audioContext.createBufferSource();
+    source.buffer = audioBuffer;
+    source.connect(audioContext.destination);
+    source.start();
+}
+
+
+const addAudioBuffer = function(wordJson) {
+    bufferMap[`${wordJson['word']}_buffer`] = wordJson['buffer']
+    // create play button
+    playbtn = document.createElement('button');
+    playbtn.innerHTML = word
+    playbtn.onclick = function() {
+        playBuffer(bufferMap[`${this.innerText}_buffer`])
+    }
+    document.getElementById('wavefiles').appendChild(playbtn);
+}
+
+
+socketio.on('add-prediction', wordJson => addprediction(JSON.parse(wordJson)));
 
 function toggleRecording( e ) {
     if (e.classList.contains('recording')) {
@@ -37,7 +106,7 @@ function toggleRecording( e ) {
     } else {
         // start recording
         document.getElementById('wavefiles').innerHTML = ""
-        addprediction('Listening for wake words [hey, fourth, brain] ...')
+        addprediction(JSON.parse('{"word": "Listening for wake words [hey, fourth, brain] ..."}'))
         e.classList.add('recording');
         recording = true;
         socketio.emit('start-recording', {numChannels: channels, bufferSize: bufferSize, bps: 16, fps: parseInt(audioContext.sampleRate)});

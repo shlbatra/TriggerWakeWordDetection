@@ -8,10 +8,11 @@ import torch
 num_mels = 40  # https://en.wikipedia.org/wiki/Mel_scale
 num_fft = 512  # window length - Fast Fourier Transform
 hop_length = 200  # making hops of size hop_length each time to sample the next window
+log_offset = 1e-7
 
 
 # Calculate mel spectrograms from audio
-def audio_transform(audio_data, device, sample_rate):
+def audio_transform(audio_data, device, sample_rate, skip_log=False):
     # Transformations
     # Mel-scale spectrogram is a combination of Spectrogram and mel scale conversion
     # 1. compute FFT - for each window to transform from time domain to frequency domain
@@ -23,7 +24,10 @@ def audio_transform(audio_data, device, sample_rate):
         n_mels=num_mels, sample_rate=sample_rate, n_fft=num_fft, hop_length=hop_length, norm="slaney"
     )
     mel_spectrogram.to(device)
-    log_mels = mel_spectrogram(audio_data.float()).add_(1e-7).log_().contiguous()
+    if skip_log:
+        log_mels = mel_spectrogram(audio_data.float())
+    else:
+        log_mels = mel_spectrogram(audio_data.float()).add_(1e-7).log_().contiguous()
     # returns (channel, n_mels, time)
     return log_mels.to(device)
 
