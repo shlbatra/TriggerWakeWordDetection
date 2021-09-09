@@ -228,7 +228,7 @@ Below are the methods used on live streaming audio on above model.
     ```bash
     eb create wakebot-std-app --instance_type t2.large --max-instances 1
     ```
-- Refer [standalone_no_flask](standalone_no_flask) for client version without flask, you can deploy on any static server, you can also deploy to [IPFS](https://ipfs.io/)
+- Refer [standalone_onnx](standalone_onnx) for client version without flask, you can deploy on any static server, you can also deploy to [IPFS](https://ipfs.io/)
 - Recent version will show, plots and audio buffer for each wake word which model infered for, click on wake word button to know what buffer was infered for that word. 
     <img src="images/onnx-demo.png">
 ### Using tensorflowjs
