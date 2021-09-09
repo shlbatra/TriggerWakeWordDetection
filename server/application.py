@@ -195,22 +195,27 @@ def write_audio(data):
                 session["threads"].append(t)
                 t.start()
 
-                # log_mel_result = {}
-                # logmels = audio_transform(audio_tensors[idx], device, sample_rate)
-                # t = threading.Thread(
-                #     target=plot_spectrogram, args=(log_mel_result, logmels, "LogMelSpectrogram", "mel freq")
-                # )
-                # session["threads"].append(t)
-                # t.start()
+                for th in session["threads"]:
+                    th.join()
+                session["threads"] = []
+
+                log_mel_result = {}
+                logmels = audio_transform(audio_tensors[idx], device, sample_rate)
+                t = threading.Thread(
+                    target=plot_spectrogram, args=(log_mel_result, logmels, "LogMelSpectrogram", "mel freq")
+                )
+                session["threads"].append(t)
+                t.start()
 
                 for th in session["threads"]:
                     th.join()
+
                 word_details = {
                     "word": pred_word,
                     "buffer": audio_data.tolist(),
                     "time": time_result["plot"],
                     "mel": mel_result["plot"],
-                    # "logmel": log_mel_result["plot"],
+                    "logmel": log_mel_result["plot"],
                 }
                 emit("add-prediction", json.dumps(word_details))
                 if session["infer_track"] == wake_words:

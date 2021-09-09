@@ -46,8 +46,8 @@ const addWordSummary = function(wordJson) {
     timePlot.src = `data:image/jpg;base64,${wordJson['time']}`
     melPlot = new Image()
     melPlot.src = `data:image/jpg;base64,${wordJson['mel']}`
-    //logMelPlot = new Image()
-    //logMelPlot.src = `data:image/jpg;base64,${wordJson['logmel']}`
+    logMelPlot = new Image()
+    logMelPlot.src = `data:image/jpg;base64,${wordJson['logmel']}`
 
     rowDiv = document.createElement('div');
     rowDiv.classList.add("row")
@@ -62,10 +62,10 @@ const addWordSummary = function(wordJson) {
     colDiv.appendChild(melPlot)
     rowDiv.appendChild(colDiv)
 
-    // colDiv = document.createElement('div')
-    // colDiv.classList.add("column")
-    // colDiv.appendChild(logMelPlot)
-    // rowDiv.appendChild(colDiv)
+    colDiv = document.createElement('div')
+    colDiv.classList.add("column")
+    colDiv.appendChild(logMelPlot)
+    rowDiv.appendChild(colDiv)
 
     document.getElementById('wavefiles').appendChild(rowDiv);
 
