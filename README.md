@@ -380,7 +380,7 @@ Below are the methods used on live streaming audio on above model.
 
 # Demo
 - For live demo 
-    - ONNX version -[https://wake.rajashekar.blog](https://wake.rajashekar.blog)    
+    - ONNX version -[https://wake.rajashekar.blog](https://wake-onnx.rajashekar.blog)    
     - Tensorflow js version - [https://wake-tf.rajashekar.blog](https://wake-tf.rajashekar.blog)
     - Tensorflow lite js version - [https://wake-tflite.rajashekar.blog](https://wake-tflite.rajashekar.blog) 
 - Allow microphone to capture audio
