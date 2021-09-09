@@ -184,21 +184,24 @@ def write_audio(data):
                 session["target_state"] += 1
                 session["infer_track"].append(pred_word)
 
+                session["threads"] = []
                 time_result = {}
                 t = threading.Thread(target=plot_time, args=(time_result, audio_tensors[idx].numpy()))
                 session["threads"].append(t)
                 t.start()
+                for th in session["threads"]:
+                    th.join()
 
+                session["threads"] = []
                 mel_result = {}
                 mels = audio_transform(audio_tensors[idx], device, sample_rate, skip_log=True)
                 t = threading.Thread(target=plot_spectrogram, args=(mel_result, mels, "MelSpectrogram", "mel freq"))
                 session["threads"].append(t)
                 t.start()
-
                 for th in session["threads"]:
                     th.join()
-                session["threads"] = []
 
+                session["threads"] = []
                 log_mel_result = {}
                 logmels = audio_transform(audio_tensors[idx], device, sample_rate)
                 t = threading.Thread(
@@ -206,7 +209,6 @@ def write_audio(data):
                 )
                 session["threads"].append(t)
                 t.start()
-
                 for th in session["threads"]:
                     th.join()
 
