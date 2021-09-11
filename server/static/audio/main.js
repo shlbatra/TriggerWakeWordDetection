@@ -228,10 +228,13 @@ function initAudio() {
     if (!navigator.requestAnimationFrame)
         navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame;
 
-    navigator.getUserMedia({audio: true}, gotStream, function(e) {
-        alert('Error getting audio');
-        console.log(e);
-    });
+    constraints = {audio: true}
+    navigator.mediaDevices.getUserMedia(constraints)
+        .then(gotStream)
+        .catch(function(err) {
+            alert('Error getting audio');
+            console.log(err);
+        });
 }
 
 window.addEventListener('load', initAudio );

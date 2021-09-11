@@ -146,7 +146,7 @@ const addWordSummary = function(word) {
     let log_mels = bufferMap[`${word}_mels`]
 
     timePlot = plotAudio(arrayBuffer, createLayout('Time domain', 'Time (samples)', 'Amplitude'));
-    melPlot = plotSpectrogram(log_mels, SPEC_HOP_LENGTH, createLayout('Mel Spectrogram', 'frame', 'mel freq'));
+    melPlot = plotSpectrogram(log_mels, SPEC_HOP_LENGTH, createLayout('Melspectrogram', 'frame', 'mel freq'));
 
     // compute log_mels
     let log_mels_offset = [];
@@ -159,7 +159,7 @@ const addWordSummary = function(word) {
         }
     }
 
-    logMelPlot = plotSpectrogram(log_mels_offset, SPEC_HOP_LENGTH, createLayout('Mel Spectrogram', 'frame', 'mel freq'));
+    logMelPlot = plotSpectrogram(log_mels_offset, SPEC_HOP_LENGTH, createLayout('Log Melspectrogram', 'frame', 'mel freq'));
 
     document.getElementById('wavefiles').appendChild(playbtn);
     rowDiv = document.createElement('div');
@@ -180,9 +180,6 @@ const addWordSummary = function(word) {
     colDiv.appendChild(logMelPlot)
     rowDiv.appendChild(colDiv)
 
-    //document.getElementById('wavefiles').appendChild(timePlot);
-    //document.getElementById('wavefiles').appendChild(melPlot);
-    //document.getElementById('wavefiles').appendChild(logMelPlot);
     document.getElementById('wavefiles').appendChild(rowDiv);
 }
 
@@ -386,10 +383,13 @@ function initAudio() {
     if (!navigator.requestAnimationFrame)
         navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame;
 
-    navigator.getUserMedia({audio: true}, gotStream, function(e) {
-        alert('Error getting audio');
-        console.log(e);
-    });
+    constraints = {audio: true}
+    navigator.mediaDevices.getUserMedia(constraints)
+        .then(gotStream)
+        .catch(function(err) {
+            alert('Error getting audio');
+            console.log(err);
+        });
 }
 
 window.addEventListener('load', initAudio );

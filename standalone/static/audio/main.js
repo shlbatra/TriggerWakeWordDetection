@@ -180,9 +180,6 @@ const addWordSummary = function(word) {
     colDiv.appendChild(logMelPlot)
     rowDiv.appendChild(colDiv)
 
-    //document.getElementById('wavefiles').appendChild(timePlot);
-    //document.getElementById('wavefiles').appendChild(melPlot);
-    //document.getElementById('wavefiles').appendChild(logMelPlot);
     document.getElementById('wavefiles').appendChild(rowDiv);
 }
 
@@ -383,10 +380,13 @@ function initAudio() {
     if (!navigator.requestAnimationFrame)
         navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame;
 
-    navigator.getUserMedia({audio: true}, gotStream, function(e) {
-        alert('Error getting audio');
-        console.log(e);
-    });
+    constraints = {audio: true}
+    navigator.mediaDevices.getUserMedia(constraints)
+        .then(gotStream)
+        .catch(function(err) {
+            alert('Error getting audio');
+            console.log(err);
+        });
 }
 
 window.addEventListener('load', initAudio );
