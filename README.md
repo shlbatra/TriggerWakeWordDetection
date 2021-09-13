@@ -34,11 +34,19 @@ To create a open-source custom wake word detector, which will take audio as inpu
 Goal is to provide configurable custom detector so that anyone can use it on their own application to perform operations, once configured wake words are detected.
 
 # Related Work
-- [Howl](https://arxiv.org/abs/2008.09606) - an open-source wake word detection toolkit with native support for open speech datasets, like Mozilla Common Voice and Google Speech Commands. This project used Pytorch Library and built model using res8 and the model was used for Firefox Voice application. Used 80 dimensional Log Mel Spectrograms with 200 hop length, which yeilded to 80 x 61 input size for each 750ms audio sample.
-- [Honkling](https://aclanthology.org/D19-3016/) - Honkling, a novel, JavaScript-based keyword spotting system. Purely written in Javascript and supports different models using TensorFlow.js. Used 40-dimensional Mel-frequency cepstral coefficients (MFCCs), yeilding 40 x 101 input size for each 1 second audio sample. Used [Meyda: an audio feature extraction library for the Web
-Audio API](http://doc.gold.ac.uk/~mu202hr/publications/RawlinsonSegalFiala_WAC2015.pdf) for audio feature extraction. 
-- In this project, we used Pytorch Libraries to build model and extract features of audio, used 40 mel banks with 200 hop length, which yielded to 40 x 61 input size for each 750ms audio sample, which is fed to CNN model. For inference, did both server side inference and client side inference. For Server side inference  audio is streamed to server from Javascript application using web sockets and on KWS notify Javascript application. For Client side inference, Pytorch model was converted to [Open Neural Network Exchange (ONNX)](https://onnx.ai/) model and deployed onnx model in Javascript application, inference will be done using [microsoft/onnxjs](https://github.com/microsoft/onnxjs). For audio feature extraction, Meyda javascript library was only giving MFCCs, but the model was trained on Log Mel Spectrograms, so used the methods implemented in [magenta-js](https://github.com/magenta/magenta-js/blob/master/music/src/core/audio_utils.ts) to extract Log Mel Spectrograms. For client side inference, no audio stream is sent to server, thus privacy is maintained. Onnx model was also coverted to tensorflow & tf lite model and inference was done using tfjs. 
-
+- Firefox Voice 
+    - Model was trained using Mozilla Common Voice dataset, used Pytorch (refer paper [Howl](https://arxiv.org/abs/2008.09606)) library to extract audio features and to train model on res8. Custom logic MeydaMelSpectrogram was used to train the model. 
+    - Used [Meyda: an audio feature extraction library for the Web
+Audio API](http://doc.gold.ac.uk/~mu202hr/publications/RawlinsonSegalFiala_WAC2015.pdf) for audio feature extraction at client side. Mel-frequency cepstral coefficients (MFCCs) is extracted from audio stream. 
+    - Used [Honkling](https://aclanthology.org/D19-3016/) (Purely written in Javascript) to do inference on model created using TensorFlow.js and copied above Pytorch model weights to the model created in tensorflow js. 
+- This project
+    - Model was trained using MCV dataset and generated data using Google Speech to Text. Used Pytorch library to extract audio features and to train model on 2  layer CNN. Used Log MelSpectrogram to train the model. 
+    - Server side inference - Used websockets to stream audio from browser to backend and did inference on that model.
+    - Client side inference 
+        - Used [magenta-js](https://github.com/magenta/magenta-js/blob/master/music/src/core/audio_utils.ts) for audio feature extraction, Log MelSpectrograms are extracted from audio stream. 
+        - Converted Pytorch Model to [Open Neural Network Exchange (ONNX)](https://onnx.ai/) model, used [microsoft/onnxjs](https://github.com/microsoft/onnxjs) to do inference on onnx model at client side. 
+        - Converted ONNX model to tensorflow model, used [tensorflow js](https://github.com/tensorflow/tfjs) to do inference on tensorflow model
+        - Converted tensorflow model to tflite model, used [tflite js](https://github.com/tensorflow/tfjs/tree/master/tfjs-tflite) to do inference on tensorflow lite model. 
 # Implementation
 
 ## Preparing labelled dataset
@@ -165,6 +173,8 @@ Check for any data imbalance, if the dataset does not have enough samples contai
 Below is how model performed on test dataset, model acheived 87% accuracy <br>
     <img src="images/test1.png" width=350>
     <img src="images/test2.png" width=350>
+Below is the ROC curve <br>
+    <img src="images/roc.png" width=350>
 ## Inference
 Below are the methods used on live streaming audio on above model. 
 ### Using Pyaudio
