@@ -170,10 +170,11 @@ Check for any data imbalance, if the dataset does not have enough samples contai
 - Code - [train.py](train/train.py) <br>
 
 ## Test Model
-Below is how model performed on test dataset, model acheived 87% accuracy <br>
+- Below is how model performed on test dataset, model acheived 87% accuracy <br>
     <img src="images/test1.png" width=350>
+- Below is the confusion matrix <br>
     <img src="images/test2.png" width=350>
-Below is the ROC curve <br>
+- Below is the ROC curve <br>
     <img src="images/roc.png" width=350>
 ## Inference
 Below are the methods used on live streaming audio on above model. 
