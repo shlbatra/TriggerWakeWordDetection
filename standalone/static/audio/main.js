@@ -184,6 +184,10 @@ const addWordSummary = function(word) {
 }
 
 function toggleRecording( e ) {
+    // Chrome is suspending the audio context on load
+    if (audioContext.state == "suspended") {
+        audioContext.resume()
+    }
     if (e.classList.contains('recording')) {
         // stop recording
         e.classList.remove('recording');
@@ -379,6 +383,11 @@ function initAudio() {
         navigator.cancelAnimationFrame = navigator.webkitCancelAnimationFrame || navigator.mozCancelAnimationFrame;
     if (!navigator.requestAnimationFrame)
         navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame;
+
+    // Chrome is suspending the audio context on load
+    if (audioContext.state == "suspended") {
+        audioContext.resume()
+    }
 
     constraints = {audio: true}
     navigator.mediaDevices.getUserMedia(constraints)

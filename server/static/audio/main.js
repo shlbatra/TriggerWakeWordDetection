@@ -98,6 +98,10 @@ const addAudioBuffer = function(wordJson) {
 socketio.on('add-prediction', wordJson => addprediction(JSON.parse(wordJson)));
 
 function toggleRecording( e ) {
+    // Chrome is suspending the audio context on load
+    if (audioContext.state == "suspended") {
+        audioContext.resume()
+    }
     if (e.classList.contains('recording')) {
         // stop recording
         e.classList.remove('recording');
@@ -228,6 +232,10 @@ function initAudio() {
     if (!navigator.requestAnimationFrame)
         navigator.requestAnimationFrame = navigator.webkitRequestAnimationFrame || navigator.mozRequestAnimationFrame;
 
+    // Chrome is suspending the audio context on load
+    if (audioContext.state == "suspended") {
+        audioContext.resume()
+    }
     constraints = {audio: true}
     navigator.mediaDevices.getUserMedia(constraints)
         .then(gotStream)
